@@ -1,5 +1,15 @@
 version: "3"
 services:
+    mariadb:
+      image: mariadb:10.0.21
+      networks:
+        - databases
+      restart: unless-stopped
+      environment:
+        - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      ports:
+        - "3306:3306"
+
     redis:
       image: redis:3.2
       networks:
@@ -9,7 +19,7 @@ services:
         - "6379:6379"
 
     mongo:
-      image: mongo:2.4
+      image: mongo:4.0
       networks:
         - databases
       restart: unless-stopped
@@ -26,6 +36,51 @@ services:
       ports:
         - "5432:5432"
 
+    solr:
+      image: solr:8.2
+      entrypoint:
+        - bash
+        - "-c"
+        - "precreate-core development; exec solr -f"
+      networks:
+        - search_platforms
+      ports:
+        - "8983:8983"
+
+    rabbitmq:
+      image: rabbitmq:3.8.0-management
+      networks:
+        - message_brokers
+      restart: unless-stopped
+      ports:
+        - "5672:5672"
+        - "15672:15672"
+
+    minio:
+      image: minio/minio:RELEASE.2020-01-03T19-12-21Z
+      networks:
+        - object_storages
+      restart: unless-stopped
+      volumes:
+        - ./minio-data:/data
+      ports:
+        - "9000:9000"
+      environment:
+        MINIO_ACCESS_KEY: 00C1ZMGJ1ADTOFS6SLUA
+        MINIO_SECRET_KEY: ySnUmRW+5qNWlJyvahV1ZWGynkidZNc3UhSA6EPU
+      command: server /data
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+        interval: 30s
+        timeout: 20s
+        retries: 3
+
 networks:
   databases:
+    driver: bridge
+  search_platforms:
+    driver: bridge
+  message_brokers:
+    driver: bridge
+  object_storages:
     driver: bridge
