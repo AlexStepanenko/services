@@ -27,14 +27,17 @@ services:
         - "27017:27017"
 
     postgres:
-      image: postgres:12.2
+      image: postgres:10
       networks:
         - databases
       restart: unless-stopped
       environment:
-        POSTGRES_PASSWORD: 'password'
+        POSTGRES_USER: postgres
+        POSTGRES_HOST_AUTH_METHOD: trust
       ports:
         - "5432:5432"
+      # volumes:
+      #   - ./postgresql.conf:/var/lib/postgresql/data/pg_hba.conf
 
     solr:
       image: solr:8.2
@@ -66,8 +69,8 @@ services:
       ports:
         - "9000:9000"
       environment:
-        MINIO_ACCESS_KEY: 00C1ZMGJ1ADTOFS6SLUA
-        MINIO_SECRET_KEY: ySnUmRW+5qNWlJyvahV1ZWGynkidZNc3UhSA6EPU
+        MINIO_ACCESS_KEY:
+        MINIO_SECRET_KEY:
       command: server /data
       healthcheck:
         test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
